@@ -30,3 +30,18 @@
   font-size: 0.7rem;
   opacity: 0.75;
 }
+
+.hud-control {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+}
+
+.hud-control input[type='range'] {
+  width: 160px;
+}
+
+.hud-value {
+  opacity: 0.8;
+}
