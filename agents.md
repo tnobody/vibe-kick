@@ -44,3 +44,7 @@
 8) Multiplayer path (later)
 - Add Bun server with WebSocket.
 - Server-authoritative state using shared `game-core`.
+
+
+## Coding Style and Guideline
+- No barrel exports, no default exports
