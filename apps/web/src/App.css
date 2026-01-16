@@ -45,3 +45,20 @@
 .hud-value {
   opacity: 0.8;
 }
+
+.hud-button {
+  margin-top: 0.35rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(35, 55, 36, 0.75);
+  color: inherit;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.hud-button:hover {
+  background: rgba(45, 70, 48, 0.85);
+}
