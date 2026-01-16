@@ -1,0 +1,14 @@
+{
+  "name": "vibe-kick",
+  "private": true,
+  "packageManager": "bun@1",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "bun --cwd apps/web dev",
+    "build": "bun --cwd apps/web build",
+    "preview": "bun --cwd apps/web preview"
+  }
+}
