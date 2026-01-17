@@ -31,7 +31,7 @@ export function buildHexGrid(layout: HexLayout) {
         id: id++,
         column,
         row,
-        position: [x, 0.01, z],
+        position: [x, 0.03, z],
       })
     }
   }

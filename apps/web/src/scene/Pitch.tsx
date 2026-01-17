@@ -31,10 +31,10 @@ function FieldLines({ color, boxWidth }: { color: string; boxWidth: number }) {
       </mesh>
 
       {/* Top penalty box */}
-      <mesh position={[boxWidth / 2, 0.02, halfLength - FIELD.boxDepth]} material={lineMaterial}>
+      <mesh position={[boxWidth / 2, 0.02, halfLength - FIELD.boxDepth / 2]} material={lineMaterial}>
         <boxGeometry args={[FIELD.line, 0.02, FIELD.boxDepth]} />
       </mesh>
-      <mesh position={[-boxWidth / 2, 0.02, halfLength - FIELD.boxDepth]} material={lineMaterial}>
+      <mesh position={[-boxWidth / 2, 0.02, halfLength - FIELD.boxDepth / 2]} material={lineMaterial}>
         <boxGeometry args={[FIELD.line, 0.02, FIELD.boxDepth]} />
       </mesh>
       <mesh position={[0, 0.02, halfLength - FIELD.boxDepth]} material={lineMaterial}>
@@ -42,10 +42,10 @@ function FieldLines({ color, boxWidth }: { color: string; boxWidth: number }) {
       </mesh>
 
       {/* Bottom penalty box */}
-      <mesh position={[boxWidth / 2, 0.02, -halfLength + FIELD.boxDepth]} material={lineMaterial}>
+      <mesh position={[boxWidth / 2, 0.02, -halfLength + FIELD.boxDepth / 2]} material={lineMaterial}>
         <boxGeometry args={[FIELD.line, 0.02, FIELD.boxDepth]} />
       </mesh>
-      <mesh position={[-boxWidth / 2, 0.02, -halfLength + FIELD.boxDepth]} material={lineMaterial}>
+      <mesh position={[-boxWidth / 2, 0.02, -halfLength + FIELD.boxDepth / 2]} material={lineMaterial}>
         <boxGeometry args={[FIELD.line, 0.02, FIELD.boxDepth]} />
       </mesh>
       <mesh position={[0, 0.02, -halfLength + FIELD.boxDepth]} material={lineMaterial}>
