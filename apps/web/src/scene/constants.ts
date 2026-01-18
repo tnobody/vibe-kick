@@ -18,6 +18,11 @@ export const BOX = {
   rows: 4,
 }
 
+export const KEEPER_BOX = {
+  columns: 5,
+  rows: 2,
+}
+
 export function getFieldLength() {
   const maxWidth = FIELD.width - GRID.padding * 2
   const spacingRadius = maxWidth / (1.5 * GRID.columns + 0.5)

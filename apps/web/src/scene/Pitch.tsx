@@ -1,15 +1,21 @@
 import * as THREE from 'three'
-import { BOX, FIELD, getFieldLength } from './constants'
+import { BOX, FIELD, KEEPER_BOX, getFieldLength } from './constants'
 import { getHexLayout } from './grid'
 
 function FieldLines({
   color,
   boxWidth,
   boxDepth,
+  keeperWidth,
+  keeperDepth,
+  circleRadius,
 }: {
   color: string
   boxWidth: number
   boxDepth: number
+  keeperWidth: number
+  keeperDepth: number
+  circleRadius: number
 }) {
   const lineMaterial = new THREE.MeshStandardMaterial({ color })
   const halfWidth = FIELD.width / 2
@@ -20,6 +26,9 @@ function FieldLines({
       {/* Midfield line */}
       <mesh position={[0, 0.02, 0]} material={lineMaterial}>
         <boxGeometry args={[FIELD.width, 0.02, FIELD.line]} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]} material={lineMaterial}>
+        <ringGeometry args={[circleRadius - FIELD.line / 2, circleRadius + FIELD.line / 2, 64]} />
       </mesh>
 
       {/* Top and bottom goal lines */}
@@ -49,6 +58,23 @@ function FieldLines({
         <boxGeometry args={[boxWidth, 0.02, FIELD.line]} />
       </mesh>
 
+      {/* Top keeper box */}
+      <mesh
+        position={[keeperWidth / 2, 0.02, halfLength - keeperDepth / 2]}
+        material={lineMaterial}
+      >
+        <boxGeometry args={[FIELD.line, 0.02, keeperDepth]} />
+      </mesh>
+      <mesh
+        position={[-keeperWidth / 2, 0.02, halfLength - keeperDepth / 2]}
+        material={lineMaterial}
+      >
+        <boxGeometry args={[FIELD.line, 0.02, keeperDepth]} />
+      </mesh>
+      <mesh position={[0, 0.02, halfLength - keeperDepth]} material={lineMaterial}>
+        <boxGeometry args={[keeperWidth, 0.02, FIELD.line]} />
+      </mesh>
+
       {/* Bottom penalty box */}
       <mesh position={[boxWidth / 2, 0.02, -halfLength + boxDepth / 2]} material={lineMaterial}>
         <boxGeometry args={[FIELD.line, 0.02, boxDepth]} />
@@ -58,6 +84,23 @@ function FieldLines({
       </mesh>
       <mesh position={[0, 0.02, -halfLength + boxDepth]} material={lineMaterial}>
         <boxGeometry args={[boxWidth, 0.02, FIELD.line]} />
+      </mesh>
+
+      {/* Bottom keeper box */}
+      <mesh
+        position={[keeperWidth / 2, 0.02, -halfLength + keeperDepth / 2]}
+        material={lineMaterial}
+      >
+        <boxGeometry args={[FIELD.line, 0.02, keeperDepth]} />
+      </mesh>
+      <mesh
+        position={[-keeperWidth / 2, 0.02, -halfLength + keeperDepth / 2]}
+        material={lineMaterial}
+      >
+        <boxGeometry args={[FIELD.line, 0.02, keeperDepth]} />
+      </mesh>
+      <mesh position={[0, 0.02, -halfLength + keeperDepth]} material={lineMaterial}>
+        <boxGeometry args={[keeperWidth, 0.02, FIELD.line]} />
       </mesh>
     </group>
   )
@@ -112,6 +155,10 @@ export default function Pitch() {
   const boxWidth =
     (BOX.columns - 1) * (layout.hexWidth * 0.75) + layout.tileRadius * 2
   const boxDepth = BOX.rows * layout.hexHeight
+  const keeperWidth =
+    (KEEPER_BOX.columns - 1) * (layout.hexWidth * 0.75) + layout.tileRadius * 2
+  const keeperDepth = KEEPER_BOX.rows * layout.hexHeight
+  const circleRadius = layout.hexHeight * 1.5
 
   return (
     <group>
@@ -119,7 +166,14 @@ export default function Pitch() {
         <planeGeometry args={[FIELD.width, fieldLength]} />
         <meshStandardMaterial color="#2e6b2d" />
       </mesh>
-      <FieldLines color="#efe9db" boxWidth={boxWidth} boxDepth={boxDepth} />
+      <FieldLines
+        color="#efe9db"
+        boxWidth={boxWidth}
+        boxDepth={boxDepth}
+        keeperWidth={keeperWidth}
+        keeperDepth={keeperDepth}
+        circleRadius={circleRadius}
+      />
       <Goals />
     </group>
   )
