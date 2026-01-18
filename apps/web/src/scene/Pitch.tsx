@@ -2,7 +2,15 @@ import * as THREE from 'three'
 import { BOX, FIELD, getFieldLength } from './constants'
 import { getHexLayout } from './grid'
 
-function FieldLines({ color, boxWidth }: { color: string; boxWidth: number }) {
+function FieldLines({
+  color,
+  boxWidth,
+  boxDepth,
+}: {
+  color: string
+  boxWidth: number
+  boxDepth: number
+}) {
   const lineMaterial = new THREE.MeshStandardMaterial({ color })
   const halfWidth = FIELD.width / 2
   const halfLength = getFieldLength() / 2
@@ -31,24 +39,24 @@ function FieldLines({ color, boxWidth }: { color: string; boxWidth: number }) {
       </mesh>
 
       {/* Top penalty box */}
-      <mesh position={[boxWidth / 2, 0.02, halfLength - FIELD.boxDepth / 2]} material={lineMaterial}>
-        <boxGeometry args={[FIELD.line, 0.02, FIELD.boxDepth]} />
+      <mesh position={[boxWidth / 2, 0.02, halfLength - boxDepth / 2]} material={lineMaterial}>
+        <boxGeometry args={[FIELD.line, 0.02, boxDepth]} />
       </mesh>
-      <mesh position={[-boxWidth / 2, 0.02, halfLength - FIELD.boxDepth / 2]} material={lineMaterial}>
-        <boxGeometry args={[FIELD.line, 0.02, FIELD.boxDepth]} />
+      <mesh position={[-boxWidth / 2, 0.02, halfLength - boxDepth / 2]} material={lineMaterial}>
+        <boxGeometry args={[FIELD.line, 0.02, boxDepth]} />
       </mesh>
-      <mesh position={[0, 0.02, halfLength - FIELD.boxDepth]} material={lineMaterial}>
+      <mesh position={[0, 0.02, halfLength - boxDepth]} material={lineMaterial}>
         <boxGeometry args={[boxWidth, 0.02, FIELD.line]} />
       </mesh>
 
       {/* Bottom penalty box */}
-      <mesh position={[boxWidth / 2, 0.02, -halfLength + FIELD.boxDepth / 2]} material={lineMaterial}>
-        <boxGeometry args={[FIELD.line, 0.02, FIELD.boxDepth]} />
+      <mesh position={[boxWidth / 2, 0.02, -halfLength + boxDepth / 2]} material={lineMaterial}>
+        <boxGeometry args={[FIELD.line, 0.02, boxDepth]} />
       </mesh>
-      <mesh position={[-boxWidth / 2, 0.02, -halfLength + FIELD.boxDepth / 2]} material={lineMaterial}>
-        <boxGeometry args={[FIELD.line, 0.02, FIELD.boxDepth]} />
+      <mesh position={[-boxWidth / 2, 0.02, -halfLength + boxDepth / 2]} material={lineMaterial}>
+        <boxGeometry args={[FIELD.line, 0.02, boxDepth]} />
       </mesh>
-      <mesh position={[0, 0.02, -halfLength + FIELD.boxDepth]} material={lineMaterial}>
+      <mesh position={[0, 0.02, -halfLength + boxDepth]} material={lineMaterial}>
         <boxGeometry args={[boxWidth, 0.02, FIELD.line]} />
       </mesh>
     </group>
@@ -103,6 +111,7 @@ export default function Pitch() {
   const layout = getHexLayout()
   const boxWidth =
     (BOX.columns - 1) * (layout.hexWidth * 0.75) + layout.tileRadius * 2
+  const boxDepth = BOX.rows * layout.hexHeight
 
   return (
     <group>
@@ -110,7 +119,7 @@ export default function Pitch() {
         <planeGeometry args={[FIELD.width, fieldLength]} />
         <meshStandardMaterial color="#2e6b2d" />
       </mesh>
-      <FieldLines color="#efe9db" boxWidth={boxWidth} />
+      <FieldLines color="#efe9db" boxWidth={boxWidth} boxDepth={boxDepth} />
       <Goals />
     </group>
   )

@@ -2,7 +2,6 @@
 export const FIELD = {
   width: 18,
   line: 0.08,
-  boxDepth: 5,
   goalWidth: 6,
   goalDepth: 1.2,
 }
@@ -15,7 +14,8 @@ export const GRID = {
 }
 
 export const BOX = {
-  columns: 7,
+  columns: 9,
+  rows: 4,
 }
 
 export function getFieldLength() {
