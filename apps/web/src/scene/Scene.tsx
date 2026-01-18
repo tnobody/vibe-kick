@@ -2,6 +2,7 @@ import { Canvas } from '@react-three/fiber'
 import StadiumCamera from './StadiumCamera'
 import Pitch from './Pitch'
 import HexGrid from './HexGrid'
+import PlayerToken from './PlayerToken'
 import type { HexCell } from './types'
 
 export default function Scene({
@@ -35,6 +36,7 @@ export default function Scene({
         onPitchChange={onPitchChange}
       />
       <Pitch />
+      <PlayerToken position={[0, 0.1, 0]} number="9" jerseyColor="#f2d851" />
       <HexGrid onHover={onHover} />
     </Canvas>
   )
