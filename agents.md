@@ -20,3 +20,10 @@
 - No barrel exports, no default exports
 - prefer simplicity over cleverness
 - One File per component
+- prefer functional approaches over oop
+- keep the server side simple and use native bun apis as much as possible
+
+## Git and PR instructions
+- Work with git flow logic
+- When working on an issue create a branch named by this pattern: `feat/<ISSUE-NUMBER>/<SLUG-OF-TITLE>`
+- Before creating the branch check if there is a local or remote copy
