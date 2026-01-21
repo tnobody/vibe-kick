@@ -1,1 +1,0 @@
-- Implemented game-core hex grid utilities (13x15 odd-q offset), neighbors, midline/goal/penalty helpers, and vitest coverage.

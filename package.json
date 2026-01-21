@@ -10,9 +10,6 @@
     "dev": "bun --cwd apps/web dev",
     "build": "bun --cwd apps/web build",
     "preview": "bun --cwd apps/web preview",
-    "test": "vitest --config packages/game-core/vitest.config.ts"
-  },
-  "devDependencies": {
-    "vitest": "^3.2.4"
+    "test": "bun test --cwd packages/game-core"
   }
 }
