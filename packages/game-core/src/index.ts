@@ -419,9 +419,14 @@ export function applyGameAction(
       areCoordsEqual(coord, state.ball.position),
     )
     const isCarrier = state.ball.carrierPlayerId === located.player.id
+    const ballOnStart = areCoordsEqual(
+      located.player.position,
+      state.ball.position,
+    )
+    const ballOnRun = ballOnPath || ballOnStart
     const wantsPickup = Boolean(action.pickUpBall)
 
-    if (wantsPickup && !ballOnPath) {
+    if (wantsPickup && !ballOnRun && !isCarrier) {
       return {
         ok: false,
         state,
@@ -462,7 +467,7 @@ export function applyGameAction(
       }
     })
 
-    const shouldCarry = isCarrier || (wantsPickup && ballOnPath)
+    const shouldCarry = isCarrier || (wantsPickup && ballOnRun)
     const updatedBall: Ballmark = shouldCarry
       ? { position: destination, carrierPlayerId: located.player.id }
       : state.ball

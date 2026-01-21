@@ -70,6 +70,35 @@ describe('game actions', () => {
     expect(result.state.ball.carrierPlayerId).toBe(runner.id)
   })
 
+  it('allows picking up the ball when starting on it', () => {
+    const runner = createPlayer('p1', { col: 2, row: 1 })
+    const other = createPlayer('p2', { col: 9, row: 9 })
+    const team = createTeam('t1', 'top', [runner])
+    const otherTeam = createTeam('t2', 'bottom', [other])
+
+    const state: GameState = {
+      teams: [team, otherTeam],
+      ball: { position: runner.position },
+      activeTeamId: team.id,
+      round: 1,
+    }
+
+    const result = applyGameAction(state, {
+      type: 'run',
+      teamId: team.id,
+      playerId: runner.id,
+      path: [{ col: 3, row: 1 }],
+      pickUpBall: true,
+    })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      throw new Error('expected run action to succeed')
+    }
+    expect(result.state.ball.position).toEqual({ col: 3, row: 1 })
+    expect(result.state.ball.carrierPlayerId).toBe(runner.id)
+  })
+
   it('rejects running through an occupied field', () => {
     const runner = createPlayer('p1', { col: 1, row: 1 })
     const blocker = createPlayer('p2', { col: 2, row: 1 })
