@@ -22,6 +22,7 @@ export default function Scene({
   gameState,
   showBall,
   hoverStatus,
+  targetCells,
 }: {
   onHover: (cell: HexCell | null) => void
   onSelect: (cell: HexCell) => void
@@ -33,6 +34,7 @@ export default function Scene({
   gameState: GameState
   showBall: boolean
   hoverStatus: HoverStatus
+  targetCells: Set<string>
 }) {
   const layout = useMemo(() => getHexLayout(), [])
   const fieldStateIndex = useMemo(
@@ -91,6 +93,7 @@ export default function Scene({
         onSelect={onSelect}
         fieldStateIndex={fieldStateIndex}
         hoverStatus={hoverStatus}
+        targetCells={targetCells}
       />
     </Canvas>
   )

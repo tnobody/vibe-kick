@@ -80,6 +80,11 @@
   background: rgba(45, 70, 48, 0.85);
 }
 
+.hud-button.is-active {
+  border-color: rgba(255, 214, 102, 0.9);
+  box-shadow: 0 0 12px rgba(255, 214, 102, 0.4);
+}
+
 .hud-button:disabled {
   opacity: 0.4;
   cursor: not-allowed;

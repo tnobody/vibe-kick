@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useState } from 'react'
-import type { GameState, OffsetCoord, TeamSide } from '@vibe-kick/game-core'
-import { MIDLINE_ROW } from '@vibe-kick/game-core'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { GameAction, GameState, OffsetCoord, TeamSide, TurnState } from '@vibe-kick/game-core'
+import { MIDLINE_ROW, applyGameAction, createTurnState, queueTurnAction } from '@vibe-kick/game-core'
 import Scene from './scene/Scene'
 import Hud from './ui/Hud'
 import type { HexCell } from './scene/types'
@@ -13,9 +13,12 @@ import {
   togglePlayerPosition,
   type SetupPhase,
 } from './ui/setup-rules'
+import { getPassTargets, getRunTargetPaths } from './ui/turn-rules'
 import './App.css'
 
 const DEFAULT_ZOOM = 26
+const TEAM_USER_ID = 'team-user'
+const TEAM_OPPONENT_ID = 'team-opponent'
 
 const baseSkills = {
   speed: 3,
@@ -35,6 +38,10 @@ function App() {
   const [selectedSide, setSelectedSide] = useState<TeamSide | null>(null)
   const [playerPositions, setPlayerPositions] = useState<OffsetCoord[]>([])
   const [ballPosition, setBallPosition] = useState<OffsetCoord | null>(null)
+  const [gameState, setGameState] = useState<GameState | null>(null)
+  const [turnState, setTurnState] = useState<TurnState | null>(null)
+  const [selectedAction, setSelectedAction] = useState<'run' | 'pass' | null>(null)
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
 
   const opponentPositions = useMemo<OffsetCoord[]>(() => {
     if (!selectedSide) {
@@ -80,8 +87,11 @@ function App() {
     if (setupPhase === 'ball') {
       return isValidBallCell(hoveredCell) ? 'valid' : 'invalid'
     }
+    if (setupPhase === 'ready' && selectedAction) {
+      return targetCells.has(`${hoveredCell.column}:${hoveredCell.row}`) ? 'valid' : 'invalid'
+    }
     return null
-  }, [hoveredCell, setupPhase, isValidPlayerCell, isValidBallCell])
+  }, [hoveredCell, setupPhase, isValidPlayerCell, isValidBallCell, selectedAction, targetCells])
 
   const handleSideSelect = useCallback((side: TeamSide) => {
     setSelectedSide(side)
@@ -106,8 +116,48 @@ function App() {
         }
         setBallPosition({ col: cell.column, row: cell.row })
       }
+
+      if (setupPhase === 'ready' && selectedAction && selectedPlayerId && activeTeamId) {
+        const key = `${cell.column}:${cell.row}`
+        if (selectedAction === 'run') {
+          const path = runTargets.get(key)
+          if (!path) {
+            return
+          }
+          applyTurnAction({
+            type: 'run',
+            teamId: activeTeamId,
+            playerId: selectedPlayerId,
+            path,
+          })
+        }
+        if (selectedAction === 'pass') {
+          const target = passTargets.get(key)
+          if (!target) {
+            return
+          }
+          applyTurnAction({
+            type: 'pass',
+            teamId: activeTeamId,
+            playerId: selectedPlayerId,
+            direction: target.direction,
+            distance: target.distance,
+          })
+        }
+      }
     },
-    [setupPhase, selectedSide, isValidPlayerCell, isValidBallCell],
+    [
+      setupPhase,
+      selectedSide,
+      selectedAction,
+      selectedPlayerId,
+      activeTeamId,
+      isValidPlayerCell,
+      isValidBallCell,
+      runTargets,
+      passTargets,
+      applyTurnAction,
+    ],
   )
 
   const handleConfirmPlayers = useCallback(() => {
@@ -123,11 +173,59 @@ function App() {
     }
   }, [ballPosition])
 
-  const gameState = useMemo<GameState>(() => {
+  const applyTurnAction = useCallback(
+    (action: GameAction) => {
+      if (!gameState || !turnState) {
+        return
+      }
+      const actionResult = applyGameAction(gameState, action)
+      if (!actionResult.ok) {
+        return
+      }
+      const queueResult = queueTurnAction(turnState, {
+        type: action.type,
+        teamId: action.teamId,
+        payload: { ...action },
+      })
+      if (!queueResult.ok) {
+        return
+      }
+      setGameState({
+        ...actionResult.state,
+        activeTeamId: queueResult.state.activeTeamId,
+        round: queueResult.state.round,
+      })
+      setTurnState(queueResult.state)
+      setSelectedAction(null)
+    },
+    [gameState, turnState],
+  )
+
+  const handleSelectAction = useCallback(
+    (action: 'run' | 'pass') => {
+      if (action === 'run' && !runAvailable) {
+        return
+      }
+      if (action === 'pass' && !passAvailable) {
+        return
+      }
+      setSelectedAction(action)
+    },
+    [runAvailable, passAvailable],
+  )
+
+  const handleDiscardAction = useCallback(() => {
+    if (!activeTeamId) {
+      return
+    }
+    applyTurnAction({ type: 'discard', teamId: activeTeamId })
+  }, [activeTeamId, applyTurnAction])
+
+  const previewState = useMemo<GameState>(() => {
     const teams = []
     if (selectedSide) {
-      const playerTeamId = 'team-user'
-      const opponentTeamId = 'team-opponent'
+      const playerTeamId = TEAM_USER_ID
+      const opponentTeamId = TEAM_OPPONENT_ID
       const opponentSide: TeamSide = selectedSide === 'top' ? 'bottom' : 'top'
       teams.push({
         id: playerTeamId,
@@ -157,10 +255,72 @@ function App() {
       ball: {
         position: ballPosition ?? { col: 6, row: MIDLINE_ROW },
       },
-      activeTeamId: selectedSide ? 'team-user' : '',
+      activeTeamId: selectedSide ? TEAM_USER_ID : '',
       round: 1,
     }
   }, [selectedSide, playerPositions, opponentPositions, ballPosition])
+  const liveState = gameState ?? previewState
+
+  useEffect(() => {
+    if (setupPhase !== 'ready') {
+      setGameState(null)
+      setTurnState(null)
+      setSelectedAction(null)
+      return
+    }
+    if (!gameState) {
+      setGameState(previewState)
+      if (previewState.teams.length === 2) {
+        setTurnState(createTurnState([TEAM_USER_ID, TEAM_OPPONENT_ID], TEAM_USER_ID, 1))
+      }
+    }
+  }, [setupPhase, gameState, previewState])
+
+  const activeTeamId = turnState?.activeTeamId ?? liveState.activeTeamId
+  const activeTeam = liveState.teams.find((team) => team.id === activeTeamId) ?? null
+
+  useEffect(() => {
+    if (!activeTeam) {
+      setSelectedPlayerId(null)
+      return
+    }
+    if (!selectedPlayerId || !activeTeam.players.some((player) => player.id === selectedPlayerId)) {
+      setSelectedPlayerId(activeTeam.players[0]?.id ?? null)
+    }
+  }, [activeTeam, selectedPlayerId])
+
+  const runTargets = useMemo(() => {
+    if (setupPhase !== 'ready' || selectedAction !== 'run' || !selectedPlayerId) {
+      return new Map()
+    }
+    return getRunTargetPaths(liveState, selectedPlayerId)
+  }, [setupPhase, selectedAction, selectedPlayerId, liveState])
+
+  const passTargets = useMemo(() => {
+    if (setupPhase !== 'ready' || selectedAction !== 'pass' || !selectedPlayerId) {
+      return new Map()
+    }
+    return getPassTargets(liveState, selectedPlayerId)
+  }, [setupPhase, selectedAction, selectedPlayerId, liveState])
+
+  const runAvailable = useMemo(() => {
+    if (setupPhase !== 'ready' || !selectedPlayerId) {
+      return false
+    }
+    return getRunTargetPaths(liveState, selectedPlayerId).size > 0
+  }, [setupPhase, selectedPlayerId, liveState])
+
+  const passAvailable = useMemo(() => {
+    if (setupPhase !== 'ready' || !selectedPlayerId) {
+      return false
+    }
+    return getPassTargets(liveState, selectedPlayerId).size > 0
+  }, [setupPhase, selectedPlayerId, liveState])
+
+  const targetCells = useMemo(() => {
+    const keys = selectedAction === 'run' ? runTargets.keys() : passTargets.keys()
+    return new Set(Array.from(keys))
+  }, [selectedAction, runTargets, passTargets])
 
   const handleZoomChange = useCallback((nextZoom: number) => {
     const clamped = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, nextZoom))
@@ -191,9 +351,10 @@ function App() {
         yaw={yaw}
         pitch={pitch}
         onPitchChange={handlePitchChange}
-        gameState={gameState}
-        showBall={Boolean(ballPosition)}
+        gameState={liveState}
+        showBall={setupPhase === 'ready' ? true : Boolean(ballPosition)}
         hoverStatus={hoverStatus}
+        targetCells={targetCells}
       />
       <Hud
         hoveredCell={hoveredCell}
@@ -212,6 +373,16 @@ function App() {
         onSideSelect={handleSideSelect}
         onConfirmPlayers={handleConfirmPlayers}
         onConfirmBall={handleConfirmBall}
+        activeTeamName={activeTeam?.name ?? ''}
+        actionsRemaining={turnState?.actionsRemaining ?? 0}
+        activePlayers={activeTeam?.players ?? []}
+        selectedPlayerId={selectedPlayerId}
+        selectedAction={selectedAction}
+        onSelectPlayer={setSelectedPlayerId}
+        onSelectAction={handleSelectAction}
+        onDiscardAction={handleDiscardAction}
+        runAvailable={runAvailable}
+        passAvailable={passAvailable}
       />
     </div>
   )
