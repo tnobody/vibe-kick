@@ -31,6 +31,23 @@
   opacity: 0.75;
 }
 
+.hud-status {
+  color: #ffd166;
+  opacity: 0.9;
+}
+
+.hud-section {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0.5rem;
+}
+
+.hud-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .hud-control {
   display: grid;
   gap: 0.25rem;
@@ -61,4 +78,9 @@
 
 .hud-button:hover {
   background: rgba(45, 70, 48, 0.85);
+}
+
+.hud-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }

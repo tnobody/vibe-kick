@@ -6,7 +6,10 @@ function coordKey(coord: OffsetCoord) {
   return `${coord.col}:${coord.row}`
 }
 
-export function buildFieldStateIndex(gameState: GameState): FieldStateIndex {
+export function buildFieldStateIndex(
+  gameState: GameState,
+  options?: { includeBall?: boolean },
+): FieldStateIndex {
   const index: FieldStateIndex = new Map()
 
   for (const team of gameState.teams) {
@@ -20,19 +23,21 @@ export function buildFieldStateIndex(gameState: GameState): FieldStateIndex {
     }
   }
 
-  const ballKey = coordKey(gameState.ball.position)
-  const occupying = index.get(ballKey)
-  if (occupying && occupying.kind === 'player') {
-    index.set(ballKey, {
-      kind: 'player_with_ball',
-      coord: gameState.ball.position,
-      playerId: occupying.playerId,
-    })
-  } else {
-    index.set(ballKey, {
-      kind: 'ball',
-      coord: gameState.ball.position,
-    })
+  if (options?.includeBall !== false) {
+    const ballKey = coordKey(gameState.ball.position)
+    const occupying = index.get(ballKey)
+    if (occupying && occupying.kind === 'player') {
+      index.set(ballKey, {
+        kind: 'player_with_ball',
+        coord: gameState.ball.position,
+        playerId: occupying.playerId,
+      })
+    } else {
+      index.set(ballKey, {
+        kind: 'ball',
+        coord: gameState.ball.position,
+      })
+    }
   }
 
   return index

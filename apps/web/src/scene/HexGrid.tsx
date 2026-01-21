@@ -4,12 +4,18 @@ import { getFieldStateAt } from './field-state'
 import type { HexCell } from './types'
 import type { FieldState } from '@vibe-kick/game-core'
 
+export type HoverStatus = 'valid' | 'invalid' | null
+
 export default function HexGrid({
   onHover,
+  onSelect,
   fieldStateIndex,
+  hoverStatus,
 }: {
   onHover: (cell: HexCell | null) => void
+  onSelect: (cell: HexCell) => void
   fieldStateIndex: Map<string, FieldState>
+  hoverStatus: HoverStatus
 }) {
   const layout = useMemo(() => getHexLayout(), [])
   const cells = useMemo(() => buildHexGrid(layout), [layout])
@@ -30,6 +36,8 @@ export default function HexGrid({
           getFieldStateAt(fieldStateIndex, { col: cell.column, row: cell.row })
         const kind = fieldState?.kind ?? 'free'
         const swatch = palette[kind]
+        const hoverColor =
+          hoverStatus === 'valid' ? '#61ffa0' : hoverStatus === 'invalid' ? '#ff6b6b' : '#ff9f1a'
         return (
           <mesh
             key={cell.id}
@@ -42,13 +50,14 @@ export default function HexGrid({
               setHoveredId(null)
               onHover(null)
             }}
+            onClick={() => onSelect(cell)}
           >
             <cylinderGeometry
               args={[layout.tileRadius, layout.tileRadius, 0.08, 6, 1, false, Math.PI / 6]}
             />
             <meshBasicMaterial
-              color={isHovered ? '#ff9f1a' : swatch.color}
-              opacity={isHovered ? 0.5 : swatch.opacity}
+              color={isHovered ? hoverColor : swatch.color}
+              opacity={isHovered ? 0.55 : swatch.opacity}
               transparent
               toneMapped={false}
             />

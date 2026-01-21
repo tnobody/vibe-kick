@@ -1,5 +1,6 @@
 export default function Hud({
   hoveredCell,
+  hoverStatus,
   zoom,
   onZoomChange,
   yaw,
@@ -7,8 +8,16 @@ export default function Hud({
   onYawToggle,
   onPitchChange,
   onResetView,
+  setupPhase,
+  selectedSide,
+  playerCount,
+  ballPlaced,
+  onSideSelect,
+  onConfirmPlayers,
+  onConfirmBall,
 }: {
   hoveredCell: { column: number; row: number } | null
+  hoverStatus: 'valid' | 'invalid' | null
   zoom: number
   onZoomChange: (nextZoom: number) => void
   yaw: number
@@ -16,14 +25,75 @@ export default function Hud({
   onYawToggle: () => void
   onPitchChange: (nextPitch: number) => void
   onResetView: () => void
+  setupPhase: 'side' | 'players' | 'ball' | 'ready'
+  selectedSide: 'top' | 'bottom' | null
+  playerCount: number
+  ballPlaced: boolean
+  onSideSelect: (side: 'top' | 'bottom') => void
+  onConfirmPlayers: () => void
+  onConfirmBall: () => void
 }) {
+  const hoverLabel = hoveredCell
+    ? `Hex ${hoveredCell.column},${hoveredCell.row}`
+    : 'Hex --'
+  const hoverHint =
+    hoverStatus === 'valid'
+      ? 'Placement valid'
+      : hoverStatus === 'invalid'
+        ? 'Placement blocked'
+        : ''
+
   return (
     <div className="hud">
       <span className="hud-title">Grid Kick</span>
       <span className="hud-subtitle">Stadium View Prototype</span>
-      <span className="hud-subtitle">
-        {hoveredCell ? `Hex ${hoveredCell.column},${hoveredCell.row}` : 'Hex --'}
-      </span>
+      <span className="hud-subtitle">{hoverLabel}</span>
+      {hoverHint && <span className="hud-subtitle hud-status">{hoverHint}</span>}
+      <div className="hud-section">
+        <span className="hud-subtitle">Setup</span>
+        {setupPhase === 'side' && (
+          <>
+            <span className="hud-subtitle">Choose your side</span>
+            <div className="hud-row">
+              <button className="hud-button" type="button" onClick={() => onSideSelect('top')}>
+                Top
+              </button>
+              <button className="hud-button" type="button" onClick={() => onSideSelect('bottom')}>
+                Bottom
+              </button>
+            </div>
+          </>
+        )}
+        {setupPhase === 'players' && (
+          <>
+            <span className="hud-subtitle">
+              {selectedSide === 'top' ? 'Top side' : 'Bottom side'} players: {playerCount}/4
+            </span>
+            <button
+              className="hud-button"
+              type="button"
+              onClick={onConfirmPlayers}
+              disabled={playerCount < 4}
+            >
+              Confirm players
+            </button>
+          </>
+        )}
+        {setupPhase === 'ball' && (
+          <>
+            <span className="hud-subtitle">Place ball on midline</span>
+            <button
+              className="hud-button"
+              type="button"
+              onClick={onConfirmBall}
+              disabled={!ballPlaced}
+            >
+              Confirm ball
+            </button>
+          </>
+        )}
+        {setupPhase === 'ready' && <span className="hud-subtitle">Setup complete</span>}
+      </div>
       <label className="hud-control">
         Zoom
         <input
