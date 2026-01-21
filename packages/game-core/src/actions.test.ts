@@ -126,6 +126,117 @@ describe('game actions', () => {
     expect(result.error.code).toBe('path_blocked')
   })
 
+  it('rejects run paths that exceed the player speed', () => {
+    const runner = {
+      ...createPlayer('p1', { col: 1, row: 1 }),
+      skills: { ...baseSkills, speed: 1 },
+    }
+    const team = createTeam('t1', 'top', [runner])
+    const otherTeam = createTeam('t2', 'bottom', [createPlayer('p2', { col: 9, row: 9 })])
+
+    const state: GameState = {
+      teams: [team, otherTeam],
+      ball: { position: { col: 6, row: 6 } },
+      activeTeamId: team.id,
+      round: 1,
+    }
+
+    const result = applyGameAction(state, {
+      type: 'run',
+      teamId: team.id,
+      playerId: runner.id,
+      path: [
+        { col: 2, row: 1 },
+        { col: 3, row: 1 },
+      ],
+    })
+
+    expect(result.ok).toBe(false)
+    if (result.ok) {
+      throw new Error('expected run action to fail')
+    }
+    expect(result.error.code).toBe('path_too_long')
+  })
+
+  it('rejects run paths that are not contiguous', () => {
+    const runner = createPlayer('p1', { col: 1, row: 1 })
+    const team = createTeam('t1', 'top', [runner])
+    const otherTeam = createTeam('t2', 'bottom', [createPlayer('p2', { col: 9, row: 9 })])
+
+    const state: GameState = {
+      teams: [team, otherTeam],
+      ball: { position: { col: 6, row: 6 } },
+      activeTeamId: team.id,
+      round: 1,
+    }
+
+    const result = applyGameAction(state, {
+      type: 'run',
+      teamId: team.id,
+      playerId: runner.id,
+      path: [{ col: 3, row: 1 }],
+    })
+
+    expect(result.ok).toBe(false)
+    if (result.ok) {
+      throw new Error('expected run action to fail')
+    }
+    expect(result.error.code).toBe('path_not_contiguous')
+  })
+
+  it('rejects run paths that leave the board', () => {
+    const runner = createPlayer('p1', { col: 0, row: 0 })
+    const team = createTeam('t1', 'top', [runner])
+    const otherTeam = createTeam('t2', 'bottom', [createPlayer('p2', { col: 9, row: 9 })])
+
+    const state: GameState = {
+      teams: [team, otherTeam],
+      ball: { position: { col: 6, row: 6 } },
+      activeTeamId: team.id,
+      round: 1,
+    }
+
+    const result = applyGameAction(state, {
+      type: 'run',
+      teamId: team.id,
+      playerId: runner.id,
+      path: [{ col: -1, row: 0 }],
+    })
+
+    expect(result.ok).toBe(false)
+    if (result.ok) {
+      throw new Error('expected run action to fail')
+    }
+    expect(result.error.code).toBe('path_out_of_bounds')
+  })
+
+  it('rejects picking up the ball when it is not on the path', () => {
+    const runner = createPlayer('p1', { col: 1, row: 1 })
+    const team = createTeam('t1', 'top', [runner])
+    const otherTeam = createTeam('t2', 'bottom', [createPlayer('p2', { col: 9, row: 9 })])
+
+    const state: GameState = {
+      teams: [team, otherTeam],
+      ball: { position: { col: 6, row: 6 } },
+      activeTeamId: team.id,
+      round: 1,
+    }
+
+    const result = applyGameAction(state, {
+      type: 'run',
+      teamId: team.id,
+      playerId: runner.id,
+      path: [{ col: 2, row: 1 }],
+      pickUpBall: true,
+    })
+
+    expect(result.ok).toBe(false)
+    if (result.ok) {
+      throw new Error('expected run action to fail')
+    }
+    expect(result.error.code).toBe('ball_pickup_not_on_path')
+  })
+
   it('passes the ball in a straight line within range', () => {
     const passer = createPlayer('p1', { col: 3, row: 1 })
     const other = createPlayer('p2', { col: 9, row: 9 })
@@ -186,6 +297,114 @@ describe('game actions', () => {
       playerId: passer.id,
       direction,
       distance,
+    })
+
+    expect(result.ok).toBe(false)
+    if (result.ok) {
+      throw new Error('expected pass action to fail')
+    }
+    expect(result.error.code).toBe('pass_blocked')
+  })
+
+  it('rejects passes when the player is not on the ball', () => {
+    const passer = createPlayer('p1', { col: 3, row: 1 })
+    const team = createTeam('t1', 'top', [passer])
+    const otherTeam = createTeam('t2', 'bottom', [createPlayer('p2', { col: 9, row: 9 })])
+
+    const state: GameState = {
+      teams: [team, otherTeam],
+      ball: { position: { col: 6, row: 6 } },
+      activeTeamId: team.id,
+      round: 1,
+    }
+
+    const result = applyGameAction(state, {
+      type: 'pass',
+      teamId: team.id,
+      playerId: passer.id,
+      direction: { q: 1, r: 0 },
+      distance: 1,
+    })
+
+    expect(result.ok).toBe(false)
+    if (result.ok) {
+      throw new Error('expected pass action to fail')
+    }
+    expect(result.error.code).toBe('pass_requires_ball')
+  })
+
+  it('rejects passes with invalid directions', () => {
+    const passer = createPlayer('p1', { col: 3, row: 1 })
+    const team = createTeam('t1', 'top', [passer])
+    const otherTeam = createTeam('t2', 'bottom', [createPlayer('p2', { col: 9, row: 9 })])
+
+    const state: GameState = {
+      teams: [team, otherTeam],
+      ball: { position: passer.position },
+      activeTeamId: team.id,
+      round: 1,
+    }
+
+    const result = applyGameAction(state, {
+      type: 'pass',
+      teamId: team.id,
+      playerId: passer.id,
+      direction: { q: 2, r: 0 },
+      distance: 1,
+    })
+
+    expect(result.ok).toBe(false)
+    if (result.ok) {
+      throw new Error('expected pass action to fail')
+    }
+    expect(result.error.code).toBe('pass_invalid_direction')
+  })
+
+  it('rejects passes with invalid distances', () => {
+    const passer = createPlayer('p1', { col: 3, row: 1 })
+    const team = createTeam('t1', 'top', [passer])
+    const otherTeam = createTeam('t2', 'bottom', [createPlayer('p2', { col: 9, row: 9 })])
+
+    const state: GameState = {
+      teams: [team, otherTeam],
+      ball: { position: passer.position },
+      activeTeamId: team.id,
+      round: 1,
+    }
+
+    const result = applyGameAction(state, {
+      type: 'pass',
+      teamId: team.id,
+      playerId: passer.id,
+      direction: { q: 1, r: 0 },
+      distance: 4,
+    })
+
+    expect(result.ok).toBe(false)
+    if (result.ok) {
+      throw new Error('expected pass action to fail')
+    }
+    expect(result.error.code).toBe('pass_invalid_distance')
+  })
+
+  it('rejects passes that leave the board', () => {
+    const passer = createPlayer('p1', { col: 12, row: 0 })
+    const team = createTeam('t1', 'top', [passer])
+    const otherTeam = createTeam('t2', 'bottom', [createPlayer('p2', { col: 9, row: 9 })])
+
+    const state: GameState = {
+      teams: [team, otherTeam],
+      ball: { position: passer.position },
+      activeTeamId: team.id,
+      round: 1,
+    }
+
+    const result = applyGameAction(state, {
+      type: 'pass',
+      teamId: team.id,
+      playerId: passer.id,
+      direction: { q: 1, r: 0 },
+      distance: 1,
     })
 
     expect(result.ok).toBe(false)
