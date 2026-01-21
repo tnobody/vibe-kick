@@ -8,6 +8,49 @@ export type AxialCoord = {
   r: number
 }
 
+export type SkillSet = {
+  speed: number
+  shoot: number
+  passing: number
+  dribbling: number
+  defense: number
+  physics: number
+}
+
+export type Player = {
+  id: string
+  name: string
+  skills: SkillSet
+  position: OffsetCoord
+}
+
+export type TeamSide = 'top' | 'bottom'
+
+export type Team = {
+  id: string
+  name: string
+  side: TeamSide
+  players: Player[]
+}
+
+export type Ballmark = {
+  position: OffsetCoord
+  carrierPlayerId?: string
+}
+
+export type FieldState =
+  | { kind: 'free'; coord: OffsetCoord }
+  | { kind: 'player'; coord: OffsetCoord; playerId: string }
+  | { kind: 'ball'; coord: OffsetCoord }
+  | { kind: 'player_with_ball'; coord: OffsetCoord; playerId: string }
+
+export type GameState = {
+  teams: Team[]
+  ball: Ballmark
+  activeTeamId: string
+  round: number
+}
+
 export const BOARD = {
   columns: 13,
   rows: 15,
