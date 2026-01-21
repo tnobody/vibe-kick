@@ -13,25 +13,32 @@ export function getHexLayout(): HexLayout {
   return { spacingRadius, tileRadius, hexWidth, hexHeight, gridWidth, gridHeight }
 }
 
-export function buildHexGrid(layout: HexLayout) {
-  const cells: HexCell[] = []
+function getHexOffsets(layout: HexLayout) {
   const offsetX = -FIELD.width / 2 + GRID.padding + layout.hexWidth / 2
   const fieldLength = getFieldLength()
   const offsetZ = fieldLength / 2 - GRID.padding - layout.hexHeight / 2
+  return { offsetX, offsetZ }
+}
+
+export function getHexPosition(layout: HexLayout, column: number, row: number) {
+  const { offsetX, offsetZ } = getHexOffsets(layout)
+  const x = column * (layout.hexWidth * 0.75) + offsetX
+  const z =
+    offsetZ - row * layout.hexHeight - (column % 2 ? layout.hexHeight / 2 : 0)
+  return [x, 0.03, z] as [number, number, number]
+}
+
+export function buildHexGrid(layout: HexLayout) {
+  const cells: HexCell[] = []
   let id = 0
 
   for (let column = 0; column < GRID.columns; column += 1) {
     for (let row = 0; row < GRID.rows; row += 1) {
-      const x = column * (layout.hexWidth * 0.75) + offsetX
-      const z =
-        offsetZ -
-        row * layout.hexHeight -
-        (column % 2 ? layout.hexHeight / 2 : 0)
       cells.push({
         id: id++,
         column,
         row,
-        position: [x, 0.03, z],
+        position: getHexPosition(layout, column, row),
       })
     }
   }

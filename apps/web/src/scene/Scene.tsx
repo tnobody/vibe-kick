@@ -1,8 +1,13 @@
 import { Canvas } from '@react-three/fiber'
+import type { GameState } from '@vibe-kick/game-core'
+import { useMemo } from 'react'
 import StadiumCamera from './StadiumCamera'
 import Pitch from './Pitch'
 import HexGrid from './HexGrid'
 import PlayerToken from './PlayerToken'
+import { BallMarker } from './BallMarker'
+import { buildFieldStateIndex } from './field-state'
+import { getHexLayout, getHexPosition } from './grid'
 import type { HexCell } from './types'
 
 export default function Scene({
@@ -12,6 +17,7 @@ export default function Scene({
   yaw,
   pitch,
   onPitchChange,
+  gameState,
 }: {
   onHover: (cell: HexCell | null) => void
   zoom: number
@@ -19,7 +25,32 @@ export default function Scene({
   yaw: number
   pitch: number
   onPitchChange: (nextPitch: number) => void
+  gameState: GameState
 }) {
+  const layout = useMemo(() => getHexLayout(), [])
+  const fieldStateIndex = useMemo(() => buildFieldStateIndex(gameState), [gameState])
+  const players = useMemo(
+    () =>
+      gameState.teams.flatMap((team) =>
+        team.players.map((player) => ({
+          id: player.id,
+          teamId: team.id,
+          position: getHexPosition(layout, player.position.col, player.position.row),
+          number: player.id.slice(-2),
+          jerseyColor: team.side === 'top' ? '#f2d851' : '#5cc8ff',
+        })),
+      ),
+    [gameState, layout],
+  )
+  const ballPosition = useMemo(() => {
+    const [x, y, z] = getHexPosition(
+      layout,
+      gameState.ball.position.col,
+      gameState.ball.position.row,
+    )
+    return [x, y + 0.35, z] as [number, number, number]
+  }, [gameState, layout])
+
   return (
     <Canvas
       shadows
@@ -36,8 +67,16 @@ export default function Scene({
         onPitchChange={onPitchChange}
       />
       <Pitch />
-      <PlayerToken position={[0, 0.1, 0]} number="9" jerseyColor="#f2d851" />
-      <HexGrid onHover={onHover} />
+      {players.map((player) => (
+        <PlayerToken
+          key={player.id}
+          position={[player.position[0], player.position[1] + 0.15, player.position[2]]}
+          number={player.number}
+          jerseyColor={player.jerseyColor}
+        />
+      ))}
+      <BallMarker position={ballPosition} />
+      <HexGrid onHover={onHover} fieldStateIndex={fieldStateIndex} />
     </Canvas>
   )
 }
