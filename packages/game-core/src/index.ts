@@ -1,1 +1,136 @@
-export {};
+export type OffsetCoord = {
+  col: number
+  row: number
+}
+
+export type AxialCoord = {
+  q: number
+  r: number
+}
+
+export const BOARD = {
+  columns: 13,
+  rows: 15,
+} as const
+
+export const MIDLINE_ROW = Math.floor(BOARD.rows / 2)
+
+export const PENALTY_BOX = {
+  columns: 9,
+  rows: 4,
+} as const
+
+const AXIAL_DIRECTIONS: AxialCoord[] = [
+  { q: 1, r: 0 },
+  { q: 1, r: -1 },
+  { q: 0, r: -1 },
+  { q: -1, r: 0 },
+  { q: -1, r: 1 },
+  { q: 0, r: 1 },
+]
+
+export function isInBounds(coord: OffsetCoord) {
+  return (
+    coord.col >= 0 &&
+    coord.col < BOARD.columns &&
+    coord.row >= 0 &&
+    coord.row < BOARD.rows
+  )
+}
+
+// Offset coordinates use odd-q layout: odd columns are shifted down.
+export function toAxial(coord: OffsetCoord): AxialCoord {
+  const q = coord.col
+  const r = coord.row - (coord.col - (coord.col & 1)) / 2
+  return { q, r }
+}
+
+export function fromAxial(coord: AxialCoord): OffsetCoord {
+  const col = coord.q
+  const row = coord.r + (coord.q - (coord.q & 1)) / 2
+  return { col, row }
+}
+
+export function getNeighborCoords(coord: OffsetCoord): OffsetCoord[] {
+  const axial = toAxial(coord)
+  return AXIAL_DIRECTIONS.map((direction) =>
+    fromAxial({ q: axial.q + direction.q, r: axial.r + direction.r }),
+  )
+}
+
+export function getInBoundsNeighborCoords(coord: OffsetCoord): OffsetCoord[] {
+  return getNeighborCoords(coord).filter(isInBounds)
+}
+
+export function getMidlineHexes(): OffsetCoord[] {
+  return getRowHexes(MIDLINE_ROW)
+}
+
+export function isMidlineHex(coord: OffsetCoord) {
+  return isInBounds(coord) && coord.row === MIDLINE_ROW
+}
+
+export function getGoalHexes() {
+  const centerColumn = Math.floor(BOARD.columns / 2)
+  return {
+    top: { col: centerColumn, row: 0 },
+    bottom: { col: centerColumn, row: BOARD.rows - 1 },
+  }
+}
+
+export function isGoalHex(coord: OffsetCoord) {
+  if (!isInBounds(coord)) {
+    return false
+  }
+  const goals = getGoalHexes()
+  return (
+    (coord.col === goals.top.col && coord.row === goals.top.row) ||
+    (coord.col === goals.bottom.col && coord.row === goals.bottom.row)
+  )
+}
+
+export function getPenaltyBoxHexes(side: 'top' | 'bottom'): OffsetCoord[] {
+  const startCol = Math.floor((BOARD.columns - PENALTY_BOX.columns) / 2)
+  const endCol = startCol + PENALTY_BOX.columns - 1
+  const startRow = side === 'top' ? 0 : BOARD.rows - PENALTY_BOX.rows
+  const endRow = startRow + PENALTY_BOX.rows - 1
+
+  const hexes: OffsetCoord[] = []
+  for (let row = startRow; row <= endRow; row += 1) {
+    for (let col = startCol; col <= endCol; col += 1) {
+      const coord = { col, row }
+      if (isInBounds(coord)) {
+        hexes.push(coord)
+      }
+    }
+  }
+
+  return hexes
+}
+
+export function isPenaltyBoxHex(
+  coord: OffsetCoord,
+  side?: 'top' | 'bottom',
+) {
+  if (!isInBounds(coord)) {
+    return false
+  }
+
+  if (side) {
+    return getPenaltyBoxHexes(side).some(
+      (hex) => hex.col === coord.col && hex.row === coord.row,
+    )
+  }
+
+  return (
+    isPenaltyBoxHex(coord, 'top') || isPenaltyBoxHex(coord, 'bottom')
+  )
+}
+
+export function getRowHexes(row: number): OffsetCoord[] {
+  if (row < 0 || row >= BOARD.rows) {
+    return []
+  }
+
+  return Array.from({ length: BOARD.columns }, (_, col) => ({ col, row }))
+}

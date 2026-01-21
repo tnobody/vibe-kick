@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "bun --cwd apps/web dev",
     "build": "bun --cwd apps/web build",
-    "preview": "bun --cwd apps/web preview"
+    "preview": "bun --cwd apps/web preview",
+    "test": "bun test --cwd packages/game-core"
   }
 }
