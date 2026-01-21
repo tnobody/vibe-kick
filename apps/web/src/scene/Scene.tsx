@@ -9,26 +9,36 @@ import { BallMarker } from './BallMarker'
 import { buildFieldStateIndex } from './field-state'
 import { getHexLayout, getHexPosition } from './grid'
 import type { HexCell } from './types'
+import type { HoverStatus } from './HexGrid'
 
 export default function Scene({
   onHover,
+  onSelect,
   zoom,
   onZoomChange,
   yaw,
   pitch,
   onPitchChange,
   gameState,
+  showBall,
+  hoverStatus,
 }: {
   onHover: (cell: HexCell | null) => void
+  onSelect: (cell: HexCell) => void
   zoom: number
   onZoomChange: (nextZoom: number) => void
   yaw: number
   pitch: number
   onPitchChange: (nextPitch: number) => void
   gameState: GameState
+  showBall: boolean
+  hoverStatus: HoverStatus
 }) {
   const layout = useMemo(() => getHexLayout(), [])
-  const fieldStateIndex = useMemo(() => buildFieldStateIndex(gameState), [gameState])
+  const fieldStateIndex = useMemo(
+    () => buildFieldStateIndex(gameState, { includeBall: showBall }),
+    [gameState, showBall],
+  )
   const players = useMemo(
     () =>
       gameState.teams.flatMap((team) =>
@@ -75,8 +85,13 @@ export default function Scene({
           jerseyColor={player.jerseyColor}
         />
       ))}
-      <BallMarker position={ballPosition} />
-      <HexGrid onHover={onHover} fieldStateIndex={fieldStateIndex} />
+      {showBall && <BallMarker position={ballPosition} />}
+      <HexGrid
+        onHover={onHover}
+        onSelect={onSelect}
+        fieldStateIndex={fieldStateIndex}
+        hoverStatus={hoverStatus}
+      />
     </Canvas>
   )
 }
