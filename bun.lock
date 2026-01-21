@@ -7,6 +7,9 @@
     "apps/server": {
       "name": "@vibe-kick/server",
       "version": "0.0.0",
+      "dependencies": {
+        "@vibe-kick/game-core": "workspace:*",
+      },
     },
     "apps/web": {
       "name": "web",
