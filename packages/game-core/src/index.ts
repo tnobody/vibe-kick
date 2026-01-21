@@ -100,6 +100,91 @@ export type GameActionResult =
   | { ok: true; state: GameState }
   | { ok: false; state: GameState; error: GameActionError }
 
+export const ACTIONS_PER_TURN = 2
+
+export type TurnAction = {
+  type: string
+  teamId: string
+  payload?: Record<string, unknown>
+}
+
+export type TurnState = {
+  teamIds: [string, string]
+  activeTeamId: string
+  round: number
+  actionsRemaining: number
+  actionQueue: TurnAction[]
+}
+
+export type TurnError = 'not_active_team' | 'no_actions_remaining' | 'unknown_team'
+
+export type TurnResult =
+  | { ok: true; state: TurnState; switched: boolean }
+  | { ok: false; state: TurnState; error: TurnError }
+
+export function createTurnState(
+  teamIds: [string, string],
+  startingTeamId?: string,
+  startingRound = 1,
+): TurnState {
+  const activeTeamId =
+    startingTeamId && teamIds.includes(startingTeamId)
+      ? startingTeamId
+      : teamIds[0]
+
+  return {
+    teamIds,
+    activeTeamId,
+    round: startingRound,
+    actionsRemaining: ACTIONS_PER_TURN,
+    actionQueue: [],
+  }
+}
+
+export function queueTurnAction(
+  state: TurnState,
+  action: TurnAction,
+): TurnResult {
+  if (!state.teamIds.includes(action.teamId)) {
+    return { ok: false, state, error: 'unknown_team' }
+  }
+
+  if (action.teamId !== state.activeTeamId) {
+    return { ok: false, state, error: 'not_active_team' }
+  }
+
+  if (state.actionsRemaining <= 0) {
+    return { ok: false, state, error: 'no_actions_remaining' }
+  }
+
+  const actionsRemaining = state.actionsRemaining - 1
+  const queuedState: TurnState = {
+    ...state,
+    actionsRemaining,
+    actionQueue: [...state.actionQueue, action],
+  }
+
+  if (actionsRemaining > 0) {
+    return { ok: true, state: queuedState, switched: false }
+  }
+
+  const nextTeamId =
+    state.activeTeamId === state.teamIds[0]
+      ? state.teamIds[1]
+      : state.teamIds[0]
+
+  return {
+    ok: true,
+    state: {
+      ...queuedState,
+      activeTeamId: nextTeamId,
+      round: state.round + 1,
+      actionsRemaining: ACTIONS_PER_TURN,
+    },
+    switched: true,
+  }
+}
+
 export const BOARD = {
   columns: 13,
   rows: 15,
