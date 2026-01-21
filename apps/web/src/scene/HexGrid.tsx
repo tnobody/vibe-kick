@@ -11,11 +11,13 @@ export default function HexGrid({
   onSelect,
   fieldStateIndex,
   hoverStatus,
+  targetCells,
 }: {
   onHover: (cell: HexCell | null) => void
   onSelect: (cell: HexCell) => void
   fieldStateIndex: Map<string, FieldState>
   hoverStatus: HoverStatus
+  targetCells: Set<string>
 }) {
   const layout = useMemo(() => getHexLayout(), [])
   const cells = useMemo(() => buildHexGrid(layout), [layout])
@@ -36,6 +38,7 @@ export default function HexGrid({
           getFieldStateAt(fieldStateIndex, { col: cell.column, row: cell.row })
         const kind = fieldState?.kind ?? 'free'
         const swatch = palette[kind]
+        const isTarget = targetCells.has(`${cell.column}:${cell.row}`)
         const hoverColor =
           hoverStatus === 'valid' ? '#61ffa0' : hoverStatus === 'invalid' ? '#ff6b6b' : '#ff9f1a'
         return (
@@ -56,8 +59,8 @@ export default function HexGrid({
               args={[layout.tileRadius, layout.tileRadius, 0.08, 6, 1, false, Math.PI / 6]}
             />
             <meshBasicMaterial
-              color={isHovered ? hoverColor : swatch.color}
-              opacity={isHovered ? 0.55 : swatch.opacity}
+              color={isHovered ? hoverColor : isTarget ? '#7dff9b' : swatch.color}
+              opacity={isHovered ? 0.55 : isTarget ? 0.45 : swatch.opacity}
               transparent
               toneMapped={false}
             />

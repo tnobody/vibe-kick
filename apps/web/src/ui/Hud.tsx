@@ -1,3 +1,5 @@
+import type { Player } from '@vibe-kick/game-core'
+
 export default function Hud({
   hoveredCell,
   hoverStatus,
@@ -15,6 +17,16 @@ export default function Hud({
   onSideSelect,
   onConfirmPlayers,
   onConfirmBall,
+  activeTeamName,
+  actionsRemaining,
+  activePlayers,
+  selectedPlayerId,
+  selectedAction,
+  onSelectPlayer,
+  onSelectAction,
+  onDiscardAction,
+  runAvailable,
+  passAvailable,
 }: {
   hoveredCell: { column: number; row: number } | null
   hoverStatus: 'valid' | 'invalid' | null
@@ -32,6 +44,16 @@ export default function Hud({
   onSideSelect: (side: 'top' | 'bottom') => void
   onConfirmPlayers: () => void
   onConfirmBall: () => void
+  activeTeamName: string
+  actionsRemaining: number
+  activePlayers: Player[]
+  selectedPlayerId: string | null
+  selectedAction: 'run' | 'pass' | null
+  onSelectPlayer: (playerId: string | null) => void
+  onSelectAction: (action: 'run' | 'pass') => void
+  onDiscardAction: () => void
+  runAvailable: boolean
+  passAvailable: boolean
 }) {
   const hoverLabel = hoveredCell
     ? `Hex ${hoveredCell.column},${hoveredCell.row}`
@@ -94,6 +116,46 @@ export default function Hud({
         )}
         {setupPhase === 'ready' && <span className="hud-subtitle">Setup complete</span>}
       </div>
+      {setupPhase === 'ready' && (
+        <div className="hud-section">
+          <span className="hud-subtitle">Turn</span>
+          <span className="hud-subtitle">Active: {activeTeamName}</span>
+          <span className="hud-subtitle">Actions remaining: {actionsRemaining}</span>
+          <div className="hud-row">
+            {activePlayers.map((player) => (
+              <button
+                key={player.id}
+                className={`hud-button ${selectedPlayerId === player.id ? 'is-active' : ''}`}
+                type="button"
+                onClick={() => onSelectPlayer(player.id)}
+              >
+                {player.name}
+              </button>
+            ))}
+          </div>
+          <div className="hud-row">
+            <button
+              className={`hud-button ${selectedAction === 'run' ? 'is-active' : ''}`}
+              type="button"
+              onClick={() => onSelectAction('run')}
+              disabled={!runAvailable}
+            >
+              Run
+            </button>
+            <button
+              className={`hud-button ${selectedAction === 'pass' ? 'is-active' : ''}`}
+              type="button"
+              onClick={() => onSelectAction('pass')}
+              disabled={!passAvailable}
+            >
+              Pass
+            </button>
+            <button className="hud-button" type="button" onClick={onDiscardAction}>
+              Discard
+            </button>
+          </div>
+        </div>
+      )}
       <label className="hud-control">
         Zoom
         <input
