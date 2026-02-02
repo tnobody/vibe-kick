@@ -77,88 +77,12 @@ function App() {
     [setupContext],
   )
 
-  const hoverStatus = useMemo(() => {
-    if (!hoveredCell) {
-      return null
-    }
-    if (setupPhase === 'players') {
-      return isValidPlayerCell(hoveredCell) ? 'valid' : 'invalid'
-    }
-    if (setupPhase === 'ball') {
-      return isValidBallCell(hoveredCell) ? 'valid' : 'invalid'
-    }
-    if (setupPhase === 'ready' && selectedAction) {
-      return targetCells.has(`${hoveredCell.column}:${hoveredCell.row}`) ? 'valid' : 'invalid'
-    }
-    return null
-  }, [hoveredCell, setupPhase, isValidPlayerCell, isValidBallCell, selectedAction, targetCells])
-
   const handleSideSelect = useCallback((side: TeamSide) => {
     setSelectedSide(side)
     setSetupPhase('players')
     setPlayerPositions([])
     setBallPosition(null)
   }, [])
-
-  const handleCellSelect = useCallback(
-    (cell: HexCell) => {
-      if (setupPhase === 'players' && selectedSide) {
-        const coord = { col: cell.column, row: cell.row }
-        if (!isValidPlayerCell(cell)) {
-          return
-        }
-        setPlayerPositions((current) => togglePlayerPosition(current, coord))
-      }
-
-      if (setupPhase === 'ball') {
-        if (!isValidBallCell(cell)) {
-          return
-        }
-        setBallPosition({ col: cell.column, row: cell.row })
-      }
-
-      if (setupPhase === 'ready' && selectedAction && selectedPlayerId && activeTeamId) {
-        const key = `${cell.column}:${cell.row}`
-        if (selectedAction === 'run') {
-          const path = runTargets.get(key)
-          if (!path) {
-            return
-          }
-          applyTurnAction({
-            type: 'run',
-            teamId: activeTeamId,
-            playerId: selectedPlayerId,
-            path,
-          })
-        }
-        if (selectedAction === 'pass') {
-          const target = passTargets.get(key)
-          if (!target) {
-            return
-          }
-          applyTurnAction({
-            type: 'pass',
-            teamId: activeTeamId,
-            playerId: selectedPlayerId,
-            direction: target.direction,
-            distance: target.distance,
-          })
-        }
-      }
-    },
-    [
-      setupPhase,
-      selectedSide,
-      selectedAction,
-      selectedPlayerId,
-      activeTeamId,
-      isValidPlayerCell,
-      isValidBallCell,
-      runTargets,
-      passTargets,
-      applyTurnAction,
-    ],
-  )
 
   const handleConfirmPlayers = useCallback(() => {
     if (playerPositions.length === 4) {
@@ -200,26 +124,6 @@ function App() {
     },
     [gameState, turnState],
   )
-
-  const handleSelectAction = useCallback(
-    (action: 'run' | 'pass') => {
-      if (action === 'run' && !runAvailable) {
-        return
-      }
-      if (action === 'pass' && !passAvailable) {
-        return
-      }
-      setSelectedAction(action)
-    },
-    [runAvailable, passAvailable],
-  )
-
-  const handleDiscardAction = useCallback(() => {
-    if (!activeTeamId) {
-      return
-    }
-    applyTurnAction({ type: 'discard', teamId: activeTeamId })
-  }, [activeTeamId, applyTurnAction])
 
   const previewState = useMemo<GameState>(() => {
     const teams = []
@@ -317,10 +221,106 @@ function App() {
     return getPassTargets(liveState, selectedPlayerId).size > 0
   }, [setupPhase, selectedPlayerId, liveState])
 
+  const handleSelectAction = useCallback(
+    (action: 'run' | 'pass') => {
+      if (action === 'run' && !runAvailable) {
+        return
+      }
+      if (action === 'pass' && !passAvailable) {
+        return
+      }
+      setSelectedAction(action)
+    },
+    [runAvailable, passAvailable],
+  )
+
+  const handleDiscardAction = useCallback(() => {
+    if (!activeTeamId) {
+      return
+    }
+    applyTurnAction({ type: 'discard', teamId: activeTeamId })
+  }, [activeTeamId, applyTurnAction])
+
   const targetCells = useMemo(() => {
     const keys = selectedAction === 'run' ? runTargets.keys() : passTargets.keys()
     return new Set(Array.from(keys))
   }, [selectedAction, runTargets, passTargets])
+
+  const handleCellSelect = useCallback(
+    (cell: HexCell) => {
+      if (setupPhase === 'players' && selectedSide) {
+        const coord = { col: cell.column, row: cell.row }
+        if (!isValidPlayerCell(cell)) {
+          return
+        }
+        setPlayerPositions((current) => togglePlayerPosition(current, coord))
+      }
+
+      if (setupPhase === 'ball') {
+        if (!isValidBallCell(cell)) {
+          return
+        }
+        setBallPosition({ col: cell.column, row: cell.row })
+      }
+
+      if (setupPhase === 'ready' && selectedAction && selectedPlayerId && activeTeamId) {
+        const key = `${cell.column}:${cell.row}`
+        if (selectedAction === 'run') {
+          const path = runTargets.get(key)
+          if (!path) {
+            return
+          }
+          applyTurnAction({
+            type: 'run',
+            teamId: activeTeamId,
+            playerId: selectedPlayerId,
+            path,
+          })
+        }
+        if (selectedAction === 'pass') {
+          const target = passTargets.get(key)
+          if (!target) {
+            return
+          }
+          applyTurnAction({
+            type: 'pass',
+            teamId: activeTeamId,
+            playerId: selectedPlayerId,
+            direction: target.direction,
+            distance: target.distance,
+          })
+        }
+      }
+    },
+    [
+      setupPhase,
+      selectedSide,
+      selectedAction,
+      selectedPlayerId,
+      activeTeamId,
+      isValidPlayerCell,
+      isValidBallCell,
+      runTargets,
+      passTargets,
+      applyTurnAction,
+    ],
+  )
+
+  const hoverStatus = useMemo(() => {
+    if (!hoveredCell) {
+      return null
+    }
+    if (setupPhase === 'players') {
+      return isValidPlayerCell(hoveredCell) ? 'valid' : 'invalid'
+    }
+    if (setupPhase === 'ball') {
+      return isValidBallCell(hoveredCell) ? 'valid' : 'invalid'
+    }
+    if (setupPhase === 'ready' && selectedAction) {
+      return targetCells.has(`${hoveredCell.column}:${hoveredCell.row}`) ? 'valid' : 'invalid'
+    }
+    return null
+  }, [hoveredCell, setupPhase, isValidPlayerCell, isValidBallCell, selectedAction, targetCells])
 
   const handleZoomChange = useCallback((nextZoom: number) => {
     const clamped = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, nextZoom))

@@ -24,6 +24,9 @@
 - keep the server side simple and use native bun apis as much as possible
 - Write unit tests especially for pure logic units (e.g. game logic)
 
+## QA Checklist
+- Run `bun run test:e2e` after changes that affect the frontend.
+
 ## Git and PR instructions
 - Use `gh` command to interact with github
 - Work with git flow logic

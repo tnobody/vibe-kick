@@ -10,6 +10,10 @@
     "dev": "bun --cwd apps/web dev",
     "build": "bun --cwd apps/web build",
     "preview": "bun --cwd apps/web preview",
-    "test": "bun test --cwd packages/game-core"
+    "test": "bun test --cwd packages/game-core",
+    "test:e2e": "bun test --cwd apps/web tests/e2e"
+  },
+  "dependencies": {
+    "@types/bun": "^1.3.6"
   }
 }
